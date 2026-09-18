@@ -9,5 +9,4 @@ public class CloudfilestorageApplication {
     public static void main(String[] args) {
         SpringApplication.run(CloudfilestorageApplication.class, args);
     }
-
 }
