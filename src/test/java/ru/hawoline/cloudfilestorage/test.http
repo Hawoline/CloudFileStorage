@@ -1,0 +1,8 @@
+# @name create matches and players
+POST localhost:8080/login
+Content-Type: application/json
+
+{
+  "username": "user",
+  "password": "password"
+}
