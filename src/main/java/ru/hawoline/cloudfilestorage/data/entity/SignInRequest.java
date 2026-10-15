@@ -1,10 +1,10 @@
-package ru.hawoline.cloudfilestorage.data;
+package ru.hawoline.cloudfilestorage.data.entity;
 
-public class SignUpRequest {
+public class SignInRequest {
     private String username;
     private String password;
 
-    public SignUpRequest(String username, String password) {
+    public SignInRequest(String username, String password) {
         this.username = username;
         this.password = password;
     }

@@ -1,20 +1,3 @@
-@csrf = my_test_user
-###
-GET http://localhost:8080/auth/csrf
-###
-GET http://localhost:8080/auth/logout
-X-XSRF-TOKEN: 5af355ca-5221-4cd5-a419-1cc14b6da597
-
-###
-POST http://localhost:8080/auth/sign-up
-Content-Type: application/json
-X-XSRF-TOKEN: 5af355ca-5221-4cd5-a419-1cc14b6da597
-
-{
-  "username": "Beliktos",
-  "password": "Beliktos2001"
-}
-
 ### 1. Получаем CSRF токен и сохраняем его
 ### 1. Безопасное получение CSRF токена
 GET http://localhost:8080/auth/csrf
@@ -23,12 +6,10 @@ Accept: application/json
 > {%
     var token = null;
 
-    // 1. Проверяем, пришел ли JSON в теле ответа
     if (response.body && response.body.token) {
         token = response.body.token;
         client.log("Токен взят из JSON тела.");
     }
-    // 2. Если тело пустое, ищем токен в HTTP-заголовках ответа
     else if (response.headers.valueOf("X-XSRF-TOKEN")) {
         token = response.headers.valueOf("X-XSRF-TOKEN");
         client.log("Токен взят из заголовка X-XSRF-TOKEN.");
@@ -44,6 +25,19 @@ Accept: application/json
         client.log("Тело ответа: " + JSON.stringify(response.body));
     }
 %}
+###
+GET http://localhost:8080/auth/logout
+X-XSRF-TOKEN: {{csrf_token}}
+
+###
+POST http://localhost:8080/auth/sign-up
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "username": "Beliktos",
+  "password": "Beliktos2001"
+}
 
 
 ### 2. Выполняем логин с использованием полученного токена
@@ -56,3 +50,7 @@ X-XSRF-TOKEN: {{csrf_token}}
   "username": "Hawoline",
   "password": "Hawoline2001"
 }
+
+###
+GET http://localhost:8080/user/me
+X-XSRF-TOKEN: {{csrf_token}}

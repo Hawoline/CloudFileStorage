@@ -1,4 +1,4 @@
-package ru.hawoline.cloudfilestorage.data;
+package ru.hawoline.cloudfilestorage.data.entity;
 
 public class UserResponse {
     private String username;
