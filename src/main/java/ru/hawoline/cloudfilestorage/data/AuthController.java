@@ -72,21 +72,17 @@ public class AuthController {
 
 		return new UserResponse(loginRequest.getUsername());
 	}
-	@GetMapping("/sign-up")
-	public String registrationPage(@ModelAttribute("person") UserEntity person) {
-		return "auth/registration";
-	}
-
 	@PostMapping("/sign-up")
-	public String performRegistration(@ModelAttribute("person") @Validated UserEntity person,
+	public @ResponseBody UserResponse performRegistration(@RequestBody SignUpRequest signUpRequest,
 									  BindingResult bindingResult) {
-		personValidator.validate(person, bindingResult);
+		UserEntity userEntity = new UserEntity(signUpRequest.getUsername(), signUpRequest.getPassword(), "ROLE_USER");
+		personValidator.validate(userEntity, bindingResult);
 
 		if (bindingResult.hasErrors())
-			return "/auth/sign-up";
+			throw new IllegalArgumentException();
 
-		registrationService.register(person);
+		registrationService.register(userEntity);
 
-		return "redirect:/auth/login";
+		return new UserResponse(userEntity.getName());
 	}
 }
