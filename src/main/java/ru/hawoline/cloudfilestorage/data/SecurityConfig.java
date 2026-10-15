@@ -45,7 +45,7 @@ public class SecurityConfig {
                 )
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .logout(logout -> logout
-                        .logoutUrl("/logout"))
+                        .logoutUrl("/auth/logout"))
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/auth/login", "/auth/sign-up", "/error", "/auth/csrf").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")

@@ -1,5 +1,6 @@
 package ru.hawoline.cloudfilestorage.data;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +72,16 @@ public class AuthController {
 		this.securityContextRepository.saveContext(context, request, response);
 
 		return new UserResponse(loginRequest.getUsername());
+	}
+
+	@GetMapping("/logout")
+	public ResponseEntity<Void> logout(HttpServletRequest servletRequest) {
+        try {
+            servletRequest.logout();
+			return ResponseEntity.ok().build();
+		} catch (ServletException e) {
+			return ResponseEntity.badRequest().build();
+		}
 	}
 	@PostMapping("/sign-up")
 	public @ResponseBody UserResponse performRegistration(@RequestBody SignUpRequest signUpRequest,
