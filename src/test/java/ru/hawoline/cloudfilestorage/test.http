@@ -1,8 +1,12 @@
-# @name create matches and players
-POST localhost:8080/login
+###
+GET http://localhost:8080/auth/csrf
+
+###
+POST localhost:8080/auth/login
 Content-Type: application/json
+X-XSRF-TOKEN: 28eb101a-e6ac-488a-bcd6-44afcbd5a3b5
 
 {
-  "username": "user",
-  "password": "password"
+  "username": "Hawoline",
+  "password": "Hawoline2001"
 }

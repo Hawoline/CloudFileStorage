@@ -1,14 +1,26 @@
 package ru.hawoline.cloudfilestorage.data;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import ru.hawoline.cloudfilestorage.util.UserEntityValidator;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Neil Alishev
@@ -16,33 +28,62 @@ import ru.hawoline.cloudfilestorage.util.UserEntityValidator;
 @Controller
 @RequestMapping("/auth")
 public class AuthController {
-
+	private final AuthenticationManager authenticationManager;
 	private final RegistrationService registrationService;
 	private final UserEntityValidator personValidator;
+	private final SecurityContextRepository securityContextRepository;
 
 	@Autowired
-	public AuthController(RegistrationService registrationService, UserEntityValidator personValidator) {
-		this.registrationService = registrationService;
+	public AuthController(AuthenticationManager authenticationManager, RegistrationService registrationService, UserEntityValidator personValidator, SecurityContextRepository securityContextRepository) {
+        this.authenticationManager = authenticationManager;
+        this.registrationService = registrationService;
 		this.personValidator = personValidator;
+        this.securityContextRepository = securityContextRepository;
+    }
+
+	@GetMapping("/csrf")
+	public Map<String, String> getCsrfToken(HttpServletRequest request) {
+		// Извлекаем CSRF-токен, который Spring Security привязал к текущему запросу
+		CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+
+		Map<String, String> response = new HashMap<>();
+		if (token != null) {
+			response.put("parameterName", token.getParameterName()); // Обычно "_csrf"
+			response.put("headerName", token.getHeaderName());       // Обычно "X-XSRF-TOKEN"
+			response.put("token", token.getToken());                 // Сам случайный токен
+		}
+		return response;
 	}
 
-	@GetMapping("/login")
-	public String loginPage() {
-		return "auth/login";
-	}
+	@PostMapping("/login")
+	public @ResponseBody UserResponse login(@RequestBody SignInRequest loginRequest,
+											HttpServletRequest request,
+											HttpServletResponse response) {
+		Authentication authenticationRequest =
+				UsernamePasswordAuthenticationToken.unauthenticated(loginRequest.getUsername(), loginRequest.getPassword());
+		Authentication authenticationResponse =
+				this.authenticationManager.authenticate(authenticationRequest);
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(authenticationResponse);
+		SecurityContextHolder.setContext(context);
 
-	@GetMapping("/registration")
+		// 4. ОБЯЗАТЕЛЬНО ДЛЯ SPRING SECURITY 6+: Сохраняем контекст в репозиторий сессий
+		this.securityContextRepository.saveContext(context, request, response);
+
+		return new UserResponse(loginRequest.getUsername());
+	}
+	@GetMapping("/sign-up")
 	public String registrationPage(@ModelAttribute("person") UserEntity person) {
 		return "auth/registration";
 	}
 
-	@PostMapping("/registration")
+	@PostMapping("/sign-up")
 	public String performRegistration(@ModelAttribute("person") @Validated UserEntity person,
 									  BindingResult bindingResult) {
 		personValidator.validate(person, bindingResult);
 
 		if (bindingResult.hasErrors())
-			return "/auth/registration";
+			return "/auth/sign-up";
 
 		registrationService.register(person);
 
