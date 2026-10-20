@@ -26,9 +26,18 @@ Accept: application/json
     }
 %}
 ###
-GET http://localhost:8080/auth/logout
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+# Подставляем сохраненный токен в нужный заголовок
 X-XSRF-TOKEN: {{csrf_token}}
 
+{
+  "username": "Beliktos",
+  "password": "Beliktos2001"
+}
+###
+GET http://localhost:8080/auth/logout
+X-XSRF-TOKEN: {{csrf_token}}
 ###
 POST http://localhost:8080/auth/sign-up
 Content-Type: application/json
@@ -41,16 +50,34 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 
 ### 2. Выполняем логин с использованием полученного токена
-POST http://localhost:8080/auth/login
-Content-Type: application/json
-# Подставляем сохраненный токен в нужный заголовок
-X-XSRF-TOKEN: {{csrf_token}}
-
-{
-  "username": "Hawoline",
-  "password": "Hawoline2001"
-}
 
 ###
 GET http://localhost:8080/user/me
+X-XSRF-TOKEN: {{csrf_token}}
+
+###
+GET http://localhost:8080/showUserInfo
+X-XSRF-TOKEN: {{csrf_token}}
+
+### Отправка файла и текстовых полей
+POST http://localhost:8080/files/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+X-XSRF-TOKEN: {{csrf_token}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+--WebAppBoundary
+Content-Disposition: form-data; name="description"
+
+Это описание для загружаемого файла
+--WebAppBoundary
+Content-Disposition: form-data; name="userId"
+
+123
+--WebAppBoundary--
+### Отправка файла и текстовых полей
+GET http://localhost:8080/files/download?path=test.jpg
 X-XSRF-TOKEN: {{csrf_token}}

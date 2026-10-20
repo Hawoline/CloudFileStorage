@@ -44,14 +44,13 @@ public class AuthController {
 
 	@GetMapping("/csrf")
 	public Map<String, String> getCsrfToken(HttpServletRequest request) {
-		// Извлекаем CSRF-токен, который Spring Security привязал к текущему запросу
 		CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
 
 		Map<String, String> response = new HashMap<>();
 		if (token != null) {
-			response.put("parameterName", token.getParameterName()); // Обычно "_csrf"
-			response.put("headerName", token.getHeaderName());       // Обычно "X-XSRF-TOKEN"
-			response.put("token", token.getToken());                 // Сам случайный токен
+			response.put("parameterName", token.getParameterName());
+			response.put("headerName", token.getHeaderName());
+			response.put("token", token.getToken());
 		}
 		return response;
 	}
@@ -68,7 +67,6 @@ public class AuthController {
 		context.setAuthentication(authenticationResponse);
 		SecurityContextHolder.setContext(context);
 
-		// 4. ОБЯЗАТЕЛЬНО ДЛЯ SPRING SECURITY 6+: Сохраняем контекст в репозиторий сессий
 		this.securityContextRepository.saveContext(context, request, response);
 
 		return new UserResponse(loginRequest.getUsername());
