@@ -55,12 +55,8 @@ X-XSRF-TOKEN: {{csrf_token}}
 GET http://localhost:8080/user/me
 X-XSRF-TOKEN: {{csrf_token}}
 
-###
-GET http://localhost:8080/showUserInfo
-X-XSRF-TOKEN: {{csrf_token}}
-
 ### Отправка файла и текстовых полей
-POST http://localhost:8080/files/upload
+POST http://localhost:8080/resource?path=hello/test.jpg
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -68,7 +64,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 Content-Disposition: form-data; name="file"; filename="test.jpg"
 Content-Type: image/jpeg
 
-< ./test.jpg
+< ./test.jp
 --WebAppBoundary
 Content-Disposition: form-data; name="description"
 
@@ -79,5 +75,11 @@ Content-Disposition: form-data; name="userId"
 123
 --WebAppBoundary--
 ### Отправка файла и текстовых полей
-GET http://localhost:8080/files/download?path=test.jpg
+GET http://localhost:8080/resource/download?path=test.jpg
+X-XSRF-TOKEN: {{csrf_token}}
+###
+GET http://localhost:8080/resource?path=/hello/sas.jpg
+X-XSRF-TOKEN: {{csrf_token}}
+###
+DELETE http://localhost:8080/resource?path=/hello/test.jp
 X-XSRF-TOKEN: {{csrf_token}}

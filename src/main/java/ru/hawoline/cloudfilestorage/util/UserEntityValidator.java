@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import ru.hawoline.cloudfilestorage.data.PersonDetailsService;
-import ru.hawoline.cloudfilestorage.data.UserEntity;
+import ru.hawoline.cloudfilestorage.data.entity.UserEntity;
 
 @Component
 public class UserEntityValidator implements Validator {

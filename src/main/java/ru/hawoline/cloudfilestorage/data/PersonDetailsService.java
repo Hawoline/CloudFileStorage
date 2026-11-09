@@ -1,9 +1,9 @@
 package ru.hawoline.cloudfilestorage.data;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import ru.hawoline.cloudfilestorage.data.entity.UserEntity;
 
 import java.util.Optional;
 

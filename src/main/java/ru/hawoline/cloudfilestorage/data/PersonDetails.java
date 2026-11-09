@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.hawoline.cloudfilestorage.data.entity.UserEntity;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +27,10 @@ public class PersonDetails implements UserDetails {
     @Override
     public @Nullable String getPassword() {
         return userEntity.getPassword();
+    }
+
+    public long getId() {
+        return userEntity.getId();
     }
 
     @Override

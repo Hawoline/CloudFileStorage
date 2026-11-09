@@ -1,10 +1,8 @@
-package ru.hawoline.cloudfilestorage.data;
+package ru.hawoline.cloudfilestorage.data.controller;
 
-import io.minio.GetObjectArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
+import io.minio.*;
 import io.minio.errors.*;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -14,32 +12,64 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.hawoline.cloudfilestorage.data.PersonDetailsService;
+import ru.hawoline.cloudfilestorage.data.entity.FileResponse;
+import ru.hawoline.cloudfilestorage.data.entity.ResourceResponse;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 
 @Controller
-@RequestMapping("/files")
-public class MinioController {
+@RequestMapping("/resource")
+public class ResourceController {
     private MinioClient minioClient;
+    private final String bucketName = "user-files";
+    private final String rootDirectory = "user";
+    private final PersonDetailsService personDetailsService;
 
     @Autowired
-    public MinioController(MinioClient minioClient) {
+    public ResourceController(MinioClient minioClient, PersonDetailsService personDetailsService) {
         this.minioClient = minioClient;
+        this.personDetailsService = personDetailsService;
     }
 
-    @GetMapping("/create")
-    public String createBucket() {
-
+    @GetMapping
+    public @ResponseBody ResourceResponse getResourceInfo(@RequestParam("path") String path, Principal principal) {
         try {
-            minioClient.makeBucket(
-                    MakeBucketArgs.builder()
-                            .bucket("hello").build()
-            );
+            InputStream stream =
+                    minioClient.getObject(GetObjectArgs
+                            .builder()
+                            .bucket(bucketName)
+                            .object(getFullPathToResource(path, principal))
+                            .build());
+            InputStreamResource resource = new InputStreamResource(stream);
+            String name = path.substring(path.lastIndexOf("/"));
+            if (name.lastIndexOf("/") == name.length() - 1) {
+                return new ResourceResponse(path, name, "FOLDER");
+            } else {
+                return new FileResponse(path, name, "FILE", resource.contentLength());
+            }
 
+        } catch (ErrorResponseException | IOException | InvalidResponseException | NoSuchAlgorithmException |
+                 ServerException | XmlParserException | InvalidKeyException | InternalException |
+                 InsufficientDataException e) {
+            System.out.println(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<Void> delete(@RequestParam("path") String path, Principal principal) {
+        try {
+            minioClient.removeObject(RemoveObjectArgs
+                    .builder()
+                    .bucket(bucketName)
+                    .object(getFullPathToResource(path, principal))
+                    .build());
+            return ResponseEntity.ok().build();
         } catch (ErrorResponseException e) {
             throw new RuntimeException(e);
         } catch (InsufficientDataException e) {
@@ -60,17 +90,21 @@ public class MinioController {
             throw new RuntimeException(e);
         }
 
-        return "hello";
     }
 
-    @PostMapping("/upload")
-    public @ResponseBody String upload(@RequestParam MultipartFile file) {
+    private @NonNull String getFullPathToResource(String path, Principal principal) {
+        return String.format("%s-%s-files/%s", rootDirectory, personDetailsService.loadUserByUsername(principal.getName()).getId(), path);
+    }
+
+    @PostMapping()
+    public @ResponseBody ResourceResponse upload(@RequestParam MultipartFile file, @RequestParam("path") String path, Principal principal) {
         System.out.println(file.getOriginalFilename());
         try {
+            String pathToResource = getFullPathToResource(path, principal);
             minioClient.putObject(PutObjectArgs
                     .builder()
-                    .bucket("hello")
-                    .object(file.getOriginalFilename())
+                    .bucket(bucketName)
+                    .object(pathToResource)
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .build());
         } catch (ErrorResponseException e) {
@@ -93,30 +127,28 @@ public class MinioController {
             throw new RuntimeException(e);
         }
 
-        return "name";
+        if (file.getName().lastIndexOf("/") == file.getSize() - 1) {
+            return new ResourceResponse(path, file.getOriginalFilename(), "FOLDER");
+        } else {
+            return new FileResponse(path, file.getOriginalFilename(), "FILE", file.getSize());
+        }
     }
 
     @GetMapping(path = "/download")
-    public ResponseEntity<Resource> download(@RequestParam("path") String path) {
+    public ResponseEntity<Resource> download(@RequestParam("path") String path, Principal principal) {
         try {
+            String pathInMinio = getFullPathToResource(path, principal);
             InputStream stream =
                     minioClient.getObject(GetObjectArgs
                             .builder()
-                            .bucket("hello")
-                            .object(path)
+                            .bucket(bucketName)
+                            .object(pathInMinio)
                             .build());
             InputStreamResource resource = new InputStreamResource(stream);
-
-            // 3. Формируем заголовки ответа
             HttpHeaders headers = new HttpHeaders();
-
-            // Указываем тип контента как универсальный бинарный поток
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", pathInMinio);
 
-            // Заставляем браузер/клиент скачивать файл, а не пытаться открыть его в веб-странице
-            headers.setContentDispositionFormData("attachment", path);
-
-            // Возвращаем ResponseEntity с потоком данных
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(resource);

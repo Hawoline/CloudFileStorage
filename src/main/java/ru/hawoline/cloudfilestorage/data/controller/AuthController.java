@@ -1,4 +1,4 @@
-package ru.hawoline.cloudfilestorage.data;
+package ru.hawoline.cloudfilestorage.data.controller;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +15,8 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import ru.hawoline.cloudfilestorage.data.RegistrationService;
+import ru.hawoline.cloudfilestorage.data.entity.UserEntity;
 import ru.hawoline.cloudfilestorage.data.entity.SignInRequest;
 import ru.hawoline.cloudfilestorage.data.entity.SignUpRequest;
 import ru.hawoline.cloudfilestorage.data.entity.UserResponse;
